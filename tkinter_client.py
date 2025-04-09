@@ -1,6 +1,7 @@
 import tkinter as tk
 from tkinter import messagebox, simpledialog
 import requests
+from app.services import task_service
 
 API_URL = "http://localhost:8080"
 
@@ -44,30 +45,17 @@ def create_task():
         messagebox.showerror("Erreur", "Tous les champs sont requis.")
         return
 
-    response = requests.post(f"{API_URL}/task", json={
-        "description": description,
-        "status": status,
-        "priority": priority,
-        "user_id": user_id
-    })
-
-    if response.status_code == 200:
-        task_id = response.json().get("id")
-        messagebox.showinfo("Succès", f"Tâche créée avec l'ID: {task_id}")
-    else:
-        messagebox.showerror("Erreur", f"Erreur: {response.text}")
+    task_service.add_task(user_id, description, status, priority)
+    messagebox.showinfo("Succès", "Tâche créée avec succès.")
 
 def list_tasks():
-    response = requests.get(f"{API_URL}/task")
-    if response.status_code == 200:
-        tasks = response.json()
-        msg = "\n".join([
-            f"{t['id']} - {t['description']} (Priorité: {t['priority']}, Statut: {t['status']}, Utilisateur: {t['user_id']})"
-            for t in tasks
-        ])
-        messagebox.showinfo("Tâches", msg if msg else "Aucune tâche")
-    else:
-        messagebox.showerror("Erreur", f"Erreur: {response.text}")
+    user_id = simpledialog.askinteger("User ID", "ID de l'utilisateur (laisser vide pour tous):")
+    tasks = task_service.get_tasks_by_user(user_id)
+    msg = "\n".join([
+        f"{t['id']} - {t['description']} (Priorité: {t['priority']}, Statut: {t['status']}, Utilisateur: {t['user_id']})"
+        for t in tasks
+    ])
+    messagebox.showinfo("Tâches", msg if msg else "Aucune tâche")
 
 # Interface principale
 root = tk.Tk()
